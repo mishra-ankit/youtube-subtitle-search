@@ -27,3 +27,9 @@
 .sentence {
   cursor: pointer;
 }
+
+.sentence.active {
+  background-color: rgba(42, 181, 115, 0.15);
+  outline: rgba(42, 181, 115, 0.5) solid 1px;
+  outline-offset: -1px;
+}

@@ -21,7 +21,11 @@ async function getVideoInfo(input: string): Promise<VideoInfo> {
   const url = `https://youtube-video-info-fvxkv650trvd.runkit.sh/?url=${input}`;
   const videoInfo = await fetch(url).then(t => t.json()) as VideoInfo;
   return videoInfo;
-}
+};
+
+const decodeHtmlCharCodes = (str: string) => 
+  str.replace(/(&#(\d+);)/g, (match, capture, charCode) => 
+    String.fromCharCode(charCode));
 
 async function getSubtitle(url: string): Promise<SentenceInfo[]> {
   const resp = await fetch(url)
@@ -30,49 +34,62 @@ async function getSubtitle(url: string): Promise<SentenceInfo[]> {
 
   const sentenceNodes = Array.from(resp.getElementsByTagName("text"));
 
+  
   return sentenceNodes.map(sentence => ({
     start: parseFloat(sentence.getAttribute("start") as string),
     duration: parseFloat(sentence.getAttribute("dur") as string),
-    text: sentence.textContent as string
+    text: decodeHtmlCharCodes(sentence.textContent as string)
   }));
-}
+};
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputURL = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<{
-    videoURL: string,
+    rawVideoURL?: string,
     subtitle?: SentenceInfo[],
+    activeSentenceIndex?: number
   }>();
 
   const handleVideoSearch = async () => {
-    const val = inputRef.current?.value;
+    const val = inputURL.current?.value;
     if (val) {
       const info = await getVideoInfo(val);
-
-      const videoURL = info.formats[0].url;
-      setState({ videoURL });
+      const rawVideoURL = info.formats[0].url;
+      setState({ rawVideoURL });
 
       // TODO: Handle better
       const subtitle = await getSubtitle(info.tracks[0].baseUrl);
-      setState({ videoURL, subtitle });
-
+      setState({ rawVideoURL, subtitle, activeSentenceIndex: 0 });
     } else {
       // TODO: handle 
     }
-  }
+  };
 
-  useEffect(() => {
-    if (state?.videoURL && videoRef.current) {
-      videoRef.current.src = state?.videoURL;
-    }
-  }, [state?.videoURL]);
-
-  const handleSentenceClick = (sentenceInfo: SentenceInfo) => {
+  const handleSentenceClick = (sentenceInfo: SentenceInfo, index: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime = sentenceInfo.start;
     }
-  }
+    setState(curr => ({
+      ...curr,
+      activeSentenceIndex: index
+    }));
+  };
+
+  const handleTimeUpdate = () => {
+    const videoCurrentTime =  videoRef.current?.currentTime;
+    // @ts-ignore
+    const nextSentenceInfo = (state?.subtitle[state?.activeSentenceIndex + 1]);
+    if (videoCurrentTime && nextSentenceInfo && videoCurrentTime > nextSentenceInfo?.start) {
+      setState(curr => ({...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1}));
+    }
+  };
+
+  useEffect(() => {
+    if (state?.rawVideoURL && videoRef.current) {
+      videoRef.current.src = state?.rawVideoURL;
+    }
+  }, [state?.rawVideoURL]);
 
   return (
     <>
@@ -84,14 +101,14 @@ function App() {
       <section className='container'>
         <header>
           <div className="search-grid">
-            <input type="text" ref={inputRef} />
+            <input name="videoId" type="text" ref={inputURL} placeholder="Put youtube URL or video ID here" autoFocus />
             <button type="submit" onClick={handleVideoSearch}>Go</button>
           </div>
         </header>
 
         {state && <main>
           <div className="main-grid">
-            <video controls ref={videoRef}></video>
+            <video controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
             <section>
               <input type="search" id="search" name="search" placeholder="Search" />
             </section>
@@ -99,9 +116,11 @@ function App() {
 
           <section>
             {state.subtitle?.map((sentenceInfo, index) => {
-              return <span key={index} className='sentence' onClick={() => {
-                handleSentenceClick(sentenceInfo);
-              }}>{sentenceInfo.text + " "}</span>
+              return <span key={index}
+                className={'sentence ' + (state.activeSentenceIndex === index ? "active" : "")}
+                onClick={() => {
+                  handleSentenceClick(sentenceInfo, index);
+                }}>{sentenceInfo.text + " "}</span>
             })}
           </section>
         </main>}
