@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { stat } from 'fs';
 
 type SentenceInfo = { start: number, text: string };
 type VideoInfo = {
@@ -48,7 +47,6 @@ function App() {
 
   const handleVideoSearch = async () => {
     const val = inputRef.current?.value;
-    console.log(val);
     if (val) {
       const info = await getVideoInfo(val);
 
@@ -71,7 +69,6 @@ function App() {
   }, [state?.videoURL]);
 
   const handleSentenceClick = (sentenceInfo: SentenceInfo) => {
-    console.log(sentenceInfo);
     if (videoRef.current) {
       videoRef.current.currentTime = sentenceInfo.start;
     }
