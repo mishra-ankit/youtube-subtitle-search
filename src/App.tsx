@@ -1,46 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { SentenceInfo } from './types';
+import { getSubtitle, getVideoInfo } from './util';
 
-type SentenceInfo = { start: number, text: string };
-type VideoInfo = {
-  formats: [
-    {
-      url: string
-    }
-  ],
-  tracks: [
-    {
-      languageCode: string,
-      baseUrl: string
-    }
-  ]
-};
-
-async function getVideoInfo(input: string): Promise<VideoInfo> {
-  const url = `https://youtube-video-info-fvxkv650trvd.runkit.sh/?url=${input}`;
-  const videoInfo = await fetch(url).then(t => t.json()) as VideoInfo;
-  return videoInfo;
-};
-
-const decodeHtmlCharCodes = (str: string) => 
-  str.replace(/(&#(\d+);)/g, (match, capture, charCode) => 
-    String.fromCharCode(charCode));
-
-async function getSubtitle(url: string): Promise<SentenceInfo[]> {
-  const resp = await fetch(url)
-    .then(response => response.text())
-    .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
-
-  const sentenceNodes = Array.from(resp.getElementsByTagName("text"));
-
-  
-  return sentenceNodes.map(sentence => ({
-    start: parseFloat(sentence.getAttribute("start") as string),
-    duration: parseFloat(sentence.getAttribute("dur") as string),
-    text: decodeHtmlCharCodes(sentence.textContent as string)
-  }));
-};
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
