@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "YT Plus",
+  "name": "The features which YouTube should provide for free. Watch videos without ads, download for offlines viewing, search within videos",
   "icons": [
     {
       "src": "favicon.ico",

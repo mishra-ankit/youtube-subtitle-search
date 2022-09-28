@@ -71,9 +71,6 @@ function App() {
         {state && <main>
           <div className="main-grid">
             <video controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
-            <section>
-              <input type="search" id="search" name="search" placeholder="Search" />
-            </section>
           </div>
 
           <section>
