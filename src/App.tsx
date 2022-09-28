@@ -4,7 +4,6 @@ import './App.css';
 import { SentenceInfo } from './types';
 import { getSubtitle, getVideoInfo } from './util';
 
-
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputURL = useRef<HTMLInputElement>(null);
@@ -43,7 +42,7 @@ function App() {
     const videoCurrentTime =  videoRef.current?.currentTime;
     // @ts-ignore
     const nextSentenceInfo = (state?.subtitle[state?.activeSentenceIndex + 1]);
-    if (videoCurrentTime && nextSentenceInfo && videoCurrentTime > nextSentenceInfo?.start) {
+    if (videoCurrentTime && nextSentenceInfo && videoCurrentTime >= nextSentenceInfo?.start) {
       setState(curr => ({...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1}));
     }
   };

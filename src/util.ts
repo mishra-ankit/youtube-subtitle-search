@@ -16,8 +16,6 @@ export async function getSubtitle(url: string): Promise<SentenceInfo[]> {
         .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
 
     const sentenceNodes = Array.from(resp.getElementsByTagName("text"));
-
-
     return sentenceNodes.map(sentence => ({
         start: parseFloat(sentence.getAttribute("start") as string),
         duration: parseFloat(sentence.getAttribute("dur") as string),
