@@ -72,12 +72,12 @@ function App() {
       </nav>
       <section className='container'>
         <header>
-          <div className="search-grid">
-            <form onSubmit={handleVideoSearch}>
+          <form onSubmit={handleVideoSearch}>
+            <div className="search-grid">
               <input required name="videoId" type="text" ref={inputURL} placeholder="Put youtube URL or video ID here" autoFocus />
               <button type="submit">Go</button>
-            </form>
-          </div>
+            </div>
+          </form>
         </header>
 
         {videoInfoStatus === "pending" && <h2>Loading...</h2>}
@@ -86,7 +86,9 @@ function App() {
 
         {videoInfoStatus === "success" && <main>
           <div className="main-grid">
-            <video controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
+            <div className="player-wrapper">
+              <video className='react-player' controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
+            </div>
           </div>
 
           {subtitleStatus === "pending" && <h2>Loading...</h2>}
