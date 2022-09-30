@@ -2,10 +2,13 @@ import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import { SentenceInfo, VideoInfo } from './types';
-import { forceDownload, getSubtitle, getVideoInfo } from './util';
+import { forceDownload, getPlayableVideoURL, getSubtitle, getVideoInfo } from './util';
 import { useAsync } from './useAsync';
 
 const Loader = () => <article aria-busy="true"></article>;
+
+// @ts-ignore
+const castJS = new Castjs();
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -60,7 +63,7 @@ function App() {
 
   useEffect(() => {
     if (videoInfo && videoRef.current) {
-      videoRef.current.src = videoInfo.videoAndAudioFormats[0].url;
+      videoRef.current.src = getPlayableVideoURL(videoInfo);
       fetchSubtitle();
     }
   }, [videoInfo]);
@@ -76,8 +79,8 @@ function App() {
         <header>
           <form onSubmit={handleVideoSearch}>
             <div className="search-grid">
-              <input required name="videoId" type="text" ref={inputURL} placeholder="Put youtube URL or video ID here" autoFocus />
-              <button type="submit">Go</button>
+              <input required name="videoId" type="text" ref={inputURL} placeholder="Paste the video link here" autoFocus />
+              <button type="submit">Start</button>
             </div>
           </form>
         </header>
@@ -87,12 +90,21 @@ function App() {
 
         {videoInfoStatus === "error" && <h3>No Video found!</h3>}
 
-        {videoInfoStatus === "success" && <main>
+        {videoInfoStatus === "success" && videoInfo && <main>
           <div className="main-grid">
             <div className="player-wrapper">
               <video className='react-player' controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
             </div>
-            <Download videoInfo={videoInfo as VideoInfo} />
+            <Download videoInfo={videoInfo} />
+            <button onClick={() => {
+              const {videoDetails} = videoInfo;
+              const metadata = {
+                poster     : videoDetails.thumbnails[0].url,
+                title      : videoDetails.title,
+                description: videoDetails.shortDescription,
+              };
+              castJS.cast(getPlayableVideoURL(videoInfo), metadata)
+            }}>Cast</button>
           </div>
 
           {subtitleStatus === "pending" && <Loader />}

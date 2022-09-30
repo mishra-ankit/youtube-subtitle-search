@@ -30,4 +30,8 @@ export function forceDownload(blob: any, filename: string) {
     document.body.appendChild(a);
     a.click();
     a.remove();
-  }
+}
+
+export function getPlayableVideoURL(videoInfo: VideoInfo) {
+    return videoInfo.videoAndAudioFormats[0].url;
+}
