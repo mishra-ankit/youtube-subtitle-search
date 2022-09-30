@@ -2,7 +2,7 @@ import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import { SentenceInfo, VideoInfo } from './types';
-import { forceDownload, getPlayableVideoURL, getSubtitle, getVideoInfo } from './util';
+import { getPlayableVideoURL, getSubtitle, getVideoInfo } from './util';
 import { useAsync } from './useAsync';
 
 const Loader = () => <article aria-busy="true"></article>;
@@ -52,9 +52,12 @@ function App() {
   };
 
   const handleTimeUpdate = () => {
+    const videoCurrentTime = videoRef.current?.currentTime;
+    if (castJS.connected) {
+      castJS.seek(videoCurrentTime);
+    }
     if (!subtitle) return;
 
-    const videoCurrentTime = videoRef.current?.currentTime;
     const nextSentenceInfo = (subtitle[state?.activeSentenceIndex + 1]);
     if (videoCurrentTime && nextSentenceInfo && videoCurrentTime >= nextSentenceInfo?.start) {
       setState(curr => ({ ...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1 }));
@@ -67,6 +70,27 @@ function App() {
       fetchSubtitle();
     }
   }, [videoInfo]);
+
+  const handleCastClick = (videoInfo: VideoInfo) => {
+    videoRef.current?.pause();
+
+    const { videoDetails } = videoInfo;
+    const metadata = {
+      poster: videoDetails.thumbnails[0].url,
+      title: videoDetails.title,
+      description: videoDetails.shortDescription,
+    };
+    castJS.cast(getPlayableVideoURL(videoInfo), metadata);
+  };
+
+  castJS.on('playing', () => {
+      
+  });
+
+  // Connected with device
+  castJS.on('connect', () => {
+
+  });  
 
   return (
     <>
@@ -93,18 +117,15 @@ function App() {
         {videoInfoStatus === "success" && videoInfo && <main>
           <div className="main-grid">
             <div className="player-wrapper">
-              <video className='react-player' controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
+              <video className='react-player' controls ref={videoRef} onTimeUpdate={handleTimeUpdate}></video>
             </div>
-            <Download videoInfo={videoInfo} />
-            <button onClick={() => {
-              const {videoDetails} = videoInfo;
-              const metadata = {
-                poster     : videoDetails.thumbnails[0].url,
-                title      : videoDetails.title,
-                description: videoDetails.shortDescription,
-              };
-              castJS.cast(getPlayableVideoURL(videoInfo), metadata)
-            }}>Cast</button>
+            <div>
+              <Download videoInfo={videoInfo} />
+              <button className='cast-button' onClick={() => handleCastClick(videoInfo)}><span className="material-symbols-outlined">
+                cast
+              </span></button>
+            </div>
+
           </div>
 
           {subtitleStatus === "pending" && <Loader />}
@@ -125,14 +146,14 @@ function Download({ videoInfo }: { videoInfo: VideoInfo }) {
   return <>
     <details role="list">
       <summary aria-haspopup="listbox" role="button">Download</summary>
-      <ul role="listbox">
+      <ul role="listbox" className='download-list'>
         {videoInfo.allFormats.map((format, index) => {
           const isAudioOnly = format.qualityLabel === null
           const hasNoAudio = format.audioCodec === null;
           const suffix = `${hasNoAudio ? "(no audio)" : ""} ${isAudioOnly ? "(audio only)" : ""}`;
           const quality = format.qualityLabel ?? "audio";
           const name = `${quality}.${format.container} ${suffix}`;
-          return <li key={index} onClick={() => forceDownload(format.url, `${videoInfo.videoDetails.title} ${quality}.${format.container}`)}>{name}</li>
+          return <li key={index}><a href={format.url}>{name}</a></li>
         })}
       </ul>
     </details>
