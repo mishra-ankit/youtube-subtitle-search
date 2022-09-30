@@ -21,6 +21,7 @@
   grid-auto-flow: row;
   grid-template-areas:
     ". .";
+  align-items: start;
 }
 
 

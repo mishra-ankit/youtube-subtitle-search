@@ -2,8 +2,10 @@ import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import { SentenceInfo, VideoInfo } from './types';
-import { getSubtitle, getVideoInfo } from './util';
+import { forceDownload, getSubtitle, getVideoInfo } from './util';
 import { useAsync } from './useAsync';
+
+const Loader = () => <article aria-busy="true"></article>;
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -58,7 +60,7 @@ function App() {
 
   useEffect(() => {
     if (videoInfo && videoRef.current) {
-      videoRef.current.src = videoInfo.formats[0].url;
+      videoRef.current.src = videoInfo.videoAndAudioFormats[0].url;
       fetchSubtitle();
     }
   }, [videoInfo]);
@@ -80,31 +82,49 @@ function App() {
           </form>
         </header>
 
-        {videoInfoStatus === "pending" && <h2>Loading...</h2>}
+        {videoInfoStatus === "pending" && <Loader />}
+        <h6>{videoInfo?.videoDetails.title}</h6>
 
-        {videoInfoStatus === "error" && <h2>No Video found!</h2>}
+        {videoInfoStatus === "error" && <h3>No Video found!</h3>}
 
         {videoInfoStatus === "success" && <main>
           <div className="main-grid">
             <div className="player-wrapper">
               <video className='react-player' controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
             </div>
+            <Download videoInfo={videoInfo as VideoInfo} />
           </div>
 
-          {subtitleStatus === "pending" && <h2>Loading...</h2>}
-          {subtitleStatus === "error" && <h2>No subtitle found!</h2>}
-          {subtitleStatus === "success" && !subtitle && <h2>No subtitle found!</h2>}
+          {subtitleStatus === "pending" && <Loader />}
+          {subtitleStatus === "error" && <h3>No subtitle found!</h3>}
+          {subtitleStatus === "success" && !subtitle && <h3>No subtitle found!</h3>}
           {subtitleStatus === "success" && subtitle &&
             <Subtitle handleSentenceClick={handleSentenceClick}
               subtitle={subtitle}
               activeSentenceIndex={state.activeSentenceIndex} />
           }
-
-
         </main>}
       </section>
     </>
   );
+}
+
+function Download({ videoInfo }: { videoInfo: VideoInfo }) {
+  return <>
+    <details role="list">
+      <summary aria-haspopup="listbox" role="button">Download</summary>
+      <ul role="listbox">
+        {videoInfo.allFormats.map((format, index) => {
+          const isAudioOnly = format.qualityLabel === null
+          const hasNoAudio = format.audioCodec === null;
+          const suffix = `${hasNoAudio ? "(no audio)" : ""} ${isAudioOnly ? "(audio only)" : ""}`;
+          const quality = format.qualityLabel ?? "audio";
+          const name = `${quality}.${format.container} ${suffix}`;
+          return <li key={index} onClick={() => forceDownload(format.url, `${videoInfo.videoDetails.title} ${quality}.${format.container}`)}>{name}</li>
+        })}
+      </ul>
+    </details>
+  </>
 }
 
 function Subtitle({ handleSentenceClick, subtitle, activeSentenceIndex }:
