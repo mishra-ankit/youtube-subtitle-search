@@ -1,31 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { SentenceInfo } from './types';
+import { SentenceInfo, VideoInfo } from './types';
 import { getSubtitle, getVideoInfo } from './util';
+import { useAsync } from './useAsync';
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputURL = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<{
-    rawVideoURL?: string,
-    subtitle?: SentenceInfo[],
     activeSentenceIndex: number
-  }>({activeSentenceIndex: 0});
+  }>({ activeSentenceIndex: 0 });
 
-  const handleVideoSearch = async () => {
-    const val = inputURL.current?.value;
-    if (val) {
-      const info = await getVideoInfo(val);
-      const rawVideoURL = info.formats[0].url;
-      setState((curr) => ({ ...curr, rawVideoURL }));
+  const hasSubtitle = (tracks: VideoInfo["tracks"]) => (Array.isArray(tracks) && tracks.length);
 
-      // TODO: Handle better
-      const subtitle = await getSubtitle(info.tracks[0].baseUrl);
-      setState({ rawVideoURL, subtitle, activeSentenceIndex: 0 });
-    } else {
-      // TODO: handle 
+  const videoInfoFetcher = () => {
+    const val = inputURL.current?.value as string;
+    return getVideoInfo(val);
+  };
+  const { execute: fetchVideoInfo, status: videoInfoStatus, value: videoInfo } = useAsync(videoInfoFetcher, false);
+
+  const subtitleFetcher = () => {
+    if (videoInfo && hasSubtitle(videoInfo.tracks)) {
+      // @ts-ignore
+      const track = videoInfo.tracks[0];
+      return getSubtitle(track.baseUrl);
     }
+
+    return Promise.reject("Subtitle not found");
+  }
+  const { execute: fetchSubtitle, status: subtitleStatus, value: subtitle } = useAsync(subtitleFetcher, false);
+
+  const handleVideoSearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    fetchVideoInfo();
   };
 
   const handleSentenceClick = (sentenceInfo: SentenceInfo, index: number) => {
@@ -39,19 +47,21 @@ function App() {
   };
 
   const handleTimeUpdate = () => {
-    const videoCurrentTime =  videoRef.current?.currentTime;
-    // @ts-ignore
-    const nextSentenceInfo = (state?.subtitle[state?.activeSentenceIndex + 1]);
+    if (!subtitle) return;
+
+    const videoCurrentTime = videoRef.current?.currentTime;
+    const nextSentenceInfo = (subtitle[state?.activeSentenceIndex + 1]);
     if (videoCurrentTime && nextSentenceInfo && videoCurrentTime >= nextSentenceInfo?.start) {
-      setState(curr => ({...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1}));
+      setState(curr => ({ ...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1 }));
     }
   };
 
   useEffect(() => {
-    if (state?.rawVideoURL && videoRef.current) {
-      videoRef.current.src = state?.rawVideoURL;
+    if (videoInfo && videoRef.current) {
+      videoRef.current.src = videoInfo.formats[0].url;
+      fetchSubtitle();
     }
-  }, [state?.rawVideoURL]);
+  }, [videoInfo]);
 
   return (
     <>
@@ -63,17 +73,32 @@ function App() {
       <section className='container'>
         <header>
           <div className="search-grid">
-            <input name="videoId" type="text" ref={inputURL} placeholder="Put youtube URL or video ID here" autoFocus />
-            <button type="submit" onClick={handleVideoSearch}>Go gu</button>
+            <form onSubmit={handleVideoSearch}>
+              <input required name="videoId" type="text" ref={inputURL} placeholder="Put youtube URL or video ID here" autoFocus />
+              <button type="submit">Go</button>
+            </form>
           </div>
         </header>
 
-        {state && <main>
+        {videoInfoStatus === "pending" && <h2>Loading...</h2>}
+
+        {videoInfoStatus === "error" && <h2>No Video found!</h2>}
+
+        {videoInfoStatus === "success" && <main>
           <div className="main-grid">
             <video controls ref={videoRef} autoPlay onTimeUpdate={handleTimeUpdate}></video>
           </div>
 
-          <Subtitle handleSentenceClick={handleSentenceClick} subtitle={state.subtitle} activeSentenceIndex={state.activeSentenceIndex} />
+          {subtitleStatus === "pending" && <h2>Loading...</h2>}
+          {subtitleStatus === "error" && <h2>No subtitle found!</h2>}
+          {subtitleStatus === "success" && !subtitle && <h2>No subtitle found!</h2>}
+          {subtitleStatus === "success" && subtitle &&
+            <Subtitle handleSentenceClick={handleSentenceClick}
+              subtitle={subtitle}
+              activeSentenceIndex={state.activeSentenceIndex} />
+          }
+
+
         </main>}
       </section>
     </>

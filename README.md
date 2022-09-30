@@ -11,14 +11,13 @@ In the project directory, you can run:
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-
-
 ## TODO -
 - [ ] Refactor code
-- [ ] Loading indicator
-- [ ] No subtitle message + other error handling
+- [x] Loading indicator
+- [x] No subtitle message + other error handling
 - [ ] Deep link
 - [ ] Mobile UI
 - [ ] Download
 - [ ] Multi language subtitle
 - [ ] Cast support
+- [ ] Support more sites (donwload only) - FB, twitter, IG etc (same as supported by YTDLp)

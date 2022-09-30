@@ -11,5 +11,5 @@ export type VideoInfo = {
             languageCode: string,
             baseUrl: string
         }
-    ]
+    ] | null
 };
