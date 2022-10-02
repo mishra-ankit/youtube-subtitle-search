@@ -56,12 +56,8 @@ function App() {
     if (castJS.connected) {
       castJS.seek(videoCurrentTime);
     }
-    if (!subtitle) return;
 
-    const nextSentenceInfo = (subtitle[state?.activeSentenceIndex + 1]);
-    if (videoCurrentTime && nextSentenceInfo && videoCurrentTime >= nextSentenceInfo?.start) {
-      setState(curr => ({ ...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1 }));
-    }
+    updateHighlightedSentence(videoCurrentTime, subtitle);
   };
 
   useEffect(() => {
@@ -90,7 +86,13 @@ function App() {
   // Connected with device
   castJS.on('connect', () => {
 
-  });  
+  });
+
+  castJS.on('timeupdate',   ()  => {
+    console.log("timeupdate");
+    const videoCurrentTime = castJS.time;
+    updateHighlightedSentence(videoCurrentTime, subtitle);
+  });
 
   return (
     <>
@@ -140,6 +142,14 @@ function App() {
       </section>
     </>
   );
+
+  function updateHighlightedSentence(videoCurrentTime: number | undefined, subtitle: SentenceInfo[] | null) {
+    if (!subtitle) return;
+    const nextSentenceInfo = (subtitle[state?.activeSentenceIndex + 1]);
+    if (videoCurrentTime && nextSentenceInfo && videoCurrentTime >= nextSentenceInfo?.start) {
+      setState(curr => ({ ...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1 }));
+    }
+  }
 }
 
 function Download({ videoInfo }: { videoInfo: VideoInfo }) {
