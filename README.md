@@ -15,9 +15,9 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 - [ ] Refactor code
 - [x] Loading indicator
 - [x] No subtitle message + other error handling
-- [ ] Deep link
+- [x] Deep link
 - [ ] Mobile UI
-- [ ] Download
+- [x] Download
 - [ ] Multi language subtitle
-- [ ] Cast support
+- [x] Cast support
 - [ ] Support more sites (donwload only) - FB, twitter, IG etc (same as supported by YTDLp)

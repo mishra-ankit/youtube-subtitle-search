@@ -1,9 +1,11 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+
 import logo from './logo.svg';
 import './App.css';
 import { SentenceInfo, VideoInfo } from './types';
 import { getPlayableVideoURL, getSubtitle, getVideoInfo } from './util';
 import { useAsync } from './useAsync';
+import { useSearchParams } from 'react-router-dom';
 
 const Loader = () => <article aria-busy="true"></article>;
 
@@ -11,6 +13,8 @@ const Loader = () => <article aria-busy="true"></article>;
 const castJS = new Castjs();
 
 function App() {
+  const [searchParams, setSearchParams] = useSearchParams({ url: "" });
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputURL = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<{
@@ -18,10 +22,8 @@ function App() {
   }>({ activeSentenceIndex: 0 });
 
   const hasSubtitle = (tracks: VideoInfo["tracks"]) => (Array.isArray(tracks) && tracks.length);
-
   const videoInfoFetcher = () => {
-    const val = inputURL.current?.value as string;
-    return getVideoInfo(val);
+    return getVideoInfo(searchParams.get("url") as string);
   };
   const { execute: fetchVideoInfo, status: videoInfoStatus, value: videoInfo } = useAsync(videoInfoFetcher, false);
 
@@ -38,7 +40,8 @@ function App() {
 
   const handleVideoSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    fetchVideoInfo();
+    const val = inputURL.current?.value as string;
+    setSearchParams({ url: val });
   };
 
   const handleSentenceClick = (sentenceInfo: SentenceInfo, index: number) => {
@@ -67,6 +70,19 @@ function App() {
     }
   }, [videoInfo]);
 
+  useEffect(() => {
+    const url = searchParams.get("url");
+    console.log("URL updated", url);
+    
+    if (inputURL.current) {
+      inputURL.current.value = url ?? "";
+    }
+    
+    if (url) {
+      fetchVideoInfo();
+    }
+  }, [searchParams]);
+
   const handleCastClick = (videoInfo: VideoInfo) => {
     videoRef.current?.pause();
 
@@ -80,7 +96,7 @@ function App() {
   };
 
   castJS.on('playing', () => {
-      
+
   });
 
   // Connected with device
@@ -88,7 +104,7 @@ function App() {
 
   });
 
-  castJS.on('timeupdate',   ()  => {
+  castJS.on('timeupdate', () => {
     console.log("timeupdate");
     const videoCurrentTime = castJS.time;
     updateHighlightedSentence(videoCurrentTime, subtitle);
