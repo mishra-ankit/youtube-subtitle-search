@@ -11,9 +11,11 @@ const Loader = () => <article aria-busy="true"></article>;
 
 // @ts-ignore
 const castJS = new Castjs();
+const paramName = "text";
+
 
 function App() {
-  const [searchParams, setSearchParams] = useSearchParams({ url: "" });
+  const [searchParams, setSearchParams] = useSearchParams({ [paramName]: "" });
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputURL = useRef<HTMLInputElement>(null);
@@ -23,7 +25,7 @@ function App() {
 
   const hasSubtitle = (tracks: VideoInfo["tracks"]) => (Array.isArray(tracks) && tracks.length);
   const videoInfoFetcher = () => {
-    return getVideoInfo(searchParams.get("url") as string);
+    return getVideoInfo(searchParams.get(paramName) as string);
   };
   const { execute: fetchVideoInfo, status: videoInfoStatus, value: videoInfo } = useAsync(videoInfoFetcher, false);
 
@@ -41,7 +43,7 @@ function App() {
   const handleVideoSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const val = inputURL.current?.value as string;
-    setSearchParams({ url: val });
+    setSearchParams({ [paramName]: val });
   };
 
   const handleSentenceClick = (sentenceInfo: SentenceInfo, index: number) => {
@@ -63,6 +65,14 @@ function App() {
     updateHighlightedSentence(videoCurrentTime, subtitle);
   };
 
+  function updateHighlightedSentence(videoCurrentTime: number | undefined, subtitle: SentenceInfo[] | null) {
+    if (!subtitle) return;
+    const nextSentenceInfo = (subtitle[state?.activeSentenceIndex + 1]);
+    if (videoCurrentTime && nextSentenceInfo && videoCurrentTime >= nextSentenceInfo?.start) {
+      setState(curr => ({ ...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1 }));
+    }
+  }
+
   useEffect(() => {
     if (videoInfo && videoRef.current) {
       videoRef.current.src = getPlayableVideoURL(videoInfo);
@@ -71,7 +81,7 @@ function App() {
   }, [videoInfo]);
 
   useEffect(() => {
-    const url = searchParams.get("url");
+    const url = searchParams.get(paramName);
     console.log("URL updated", url);
     
     if (inputURL.current) {
@@ -130,7 +140,7 @@ function App() {
         {videoInfoStatus === "pending" && <Loader />}
         <h6>{videoInfo?.videoDetails.title}</h6>
 
-        {videoInfoStatus === "error" && <h3>No Video found!</h3>}
+        {videoInfoStatus === "error" && <h3>No video found! Please check the URL.</h3>}
 
         {videoInfoStatus === "success" && videoInfo && <main>
           <div className="main-grid">
@@ -158,14 +168,6 @@ function App() {
       </section>
     </>
   );
-
-  function updateHighlightedSentence(videoCurrentTime: number | undefined, subtitle: SentenceInfo[] | null) {
-    if (!subtitle) return;
-    const nextSentenceInfo = (subtitle[state?.activeSentenceIndex + 1]);
-    if (videoCurrentTime && nextSentenceInfo && videoCurrentTime >= nextSentenceInfo?.start) {
-      setState(curr => ({ ...curr, activeSentenceIndex: (curr?.activeSentenceIndex ?? 0) + 1 }));
-    }
-  }
 }
 
 function Download({ videoInfo }: { videoInfo: VideoInfo }) {
