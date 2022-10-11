@@ -17,10 +17,13 @@ Backend - https://runkit.com/ankit/youtube-video-info
 
 ## TODO -
 - [ ] Refactor code
+- [ ] Playlist support
+- [ ] Queue 
+- [ ] Share button
 - [x] Loading indicator
 - [x] No subtitle message + other error handling
 - [x] Deep link
-- [ ] Mobile UI
+- [x] Mobile UI
 - [x] Download
 - [ ] Multi language subtitle
 - [x] Cast support
