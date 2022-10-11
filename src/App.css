@@ -1,3 +1,24 @@
+
+@media only screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) {
+      --invalid-color:rgba(183, 28, 28, 0.5);
+      --valid-color: rgba(46, 125, 50, 0.5);
+      --nav-background-color: rgba(16, 24, 30, 0.8);
+      --nav-border-color: rgba(115, 130, 140, 0.2);
+      --nav-logo-color: #0e1419;
+      --article-code-background-color: var(--code-background-color)
+  }
+}
+
+[data-theme=dark] {
+  --invalid-color: rgba(183, 28, 28, 0.5);
+  --valid-color: rgba(46, 125, 50, 0.5);
+  --nav-background-color: rgba(16, 24, 30, 0.8);
+  --nav-border-color: rgba(115, 130, 140, 0.2);
+  --nav-logo-color: #0e1419;
+  --article-code-background-color: var(--code-background-color)
+}
+
 .logo {
   width: 2em;
   height: 2em;
@@ -57,4 +78,16 @@
   width: fit-content;
   background: transparent;
   border: none;
+}
+
+.search-grid *{
+  border-radius: 0;
+}
+
+nav {
+  box-shadow: 0 1px 0 var(--nav-border-color);
+}
+
+.search-section {
+  padding-top: 1rem;
 }

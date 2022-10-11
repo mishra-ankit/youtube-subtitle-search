@@ -1,18 +1,17 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
 
-import logo from './logo.svg';
 import './App.css';
 import { SentenceInfo, VideoInfo } from './types';
 import { getPlayableVideoURL, getSubtitle, getVideoInfo } from './util';
 import { useAsync } from './useAsync';
 import { useSearchParams } from 'react-router-dom';
+import Header from './components/Header';
 
 const Loader = () => <article aria-busy="true"></article>;
 
 // @ts-ignore
 const castJS = new Castjs();
 const paramName = "text";
-
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams({ [paramName]: "" });
@@ -122,13 +121,9 @@ function App() {
 
   return (
     <>
-      <nav>
-        <a href="/">
-          <img src={logo} className="logo" alt="logo" />
-        </a>
-      </nav>
-      <section className='container'>
-        <header>
+      <Header></Header>
+      <section>
+        <header className='container search-section'>
           <form onSubmit={handleVideoSearch}>
             <div className="search-grid">
               <input required name="videoId" type="text" ref={inputURL} placeholder="Paste the video link here" autoFocus />
