@@ -74,10 +74,11 @@
   height: 100%;
 }
 
-.cast-button {
+.action-button {
   width: fit-content;
   background: transparent;
   border: none;
+  display: inline-block;
 }
 
 .search-grid *{

@@ -1,11 +1,12 @@
-import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
-import './App.css';
-import { SentenceInfo, VideoInfo } from './types';
-import { getPlayableVideoURL, getSubtitle, getVideoInfo } from './util';
-import { useAsync } from './useAsync';
 import { useSearchParams } from 'react-router-dom';
+import './App.css';
 import Header from './components/Header';
+import useTabActive from './hooks/useTabActive';
+import { SentenceInfo, VideoInfo } from './types';
+import { useAsync } from './useAsync';
+import { getPlayableVideoURL, getSubtitle, getVideoInfo } from './util';
 
 const Loader = () => <article aria-busy="true"></article>;
 
@@ -15,6 +16,7 @@ const paramName = "text";
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams({ [paramName]: "" });
+  const isTabActive = useTabActive();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputURL = useRef<HTMLInputElement>(null);
@@ -82,15 +84,29 @@ function App() {
   useEffect(() => {
     const url = searchParams.get(paramName);
     console.log("URL updated", url);
-    
+
     if (inputURL.current) {
       inputURL.current.value = url ?? "";
     }
-    
+
     if (url) {
       fetchVideoInfo();
     }
   }, [searchParams]);
+
+  // If tab goes out of focus, and video is playing go to pip mode
+  useEffect(() => {
+    const videoElem = videoRef.current;
+    if (!videoElem) return;
+
+    if (!videoElem.paused) {
+      if (isTabActive) {
+        document.exitPictureInPicture();
+      } else {
+        videoElem.requestPictureInPicture();
+      }
+    }
+  }, [isTabActive]);
 
   const handleCastClick = (videoInfo: VideoInfo) => {
     videoRef.current?.pause();
@@ -140,13 +156,21 @@ function App() {
         {videoInfoStatus === "success" && videoInfo && <main>
           <div className="main-grid">
             <div className="player-wrapper">
-              <video className='react-player' controls ref={videoRef} onTimeUpdate={handleTimeUpdate}></video>
+              <video className='react-player' key={videoInfo.videoDetails.videoId} controls ref={videoRef} onTimeUpdate={handleTimeUpdate}></video>
             </div>
             <div>
               <Download videoInfo={videoInfo} />
-              <button className='cast-button' onClick={() => handleCastClick(videoInfo)}><span className="material-symbols-outlined">
-                cast
-              </span></button>
+              <button className='action-button' onClick={() => handleCastClick(videoInfo)}>
+                <span className="material-symbols-outlined">
+                  cast
+                </span>
+              </button>
+              <button className='action-button' onClick={() => videoRef.current && videoRef.current.requestPictureInPicture()}>
+                <span className="material-symbols-outlined">
+                  branding_watermark
+                </span>
+              </button>
+
             </div>
 
           </div>
