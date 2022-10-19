@@ -46,7 +46,7 @@
 }
 
 .download-list {
-  height: 50vh;
+  max-height: 50vh;
   overflow-y: scroll;
 }
 
@@ -76,9 +76,10 @@
 
 .action-button {
   width: fit-content;
-  background: transparent;
+  margin: 0.5em;
   border: none;
   display: inline-block;
+  padding: 0.6em;
 }
 
 .search-grid *{

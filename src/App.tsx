@@ -154,7 +154,7 @@ function App() {
         {videoInfoStatus === "error" && <h3>No video found! Please check the URL.</h3>}
 
         {videoInfoStatus === "success" && videoInfo && <main>
-          <div className="main-grid">
+          <div>
             <div className="player-wrapper">
               <video className='react-player' key={videoInfo.videoDetails.videoId} controls ref={videoRef} onTimeUpdate={handleTimeUpdate}></video>
             </div>
@@ -194,7 +194,7 @@ function Download({ videoInfo }: { videoInfo: VideoInfo }) {
     <details role="list">
       <summary aria-haspopup="listbox" role="button">Download</summary>
       <ul role="listbox" className='download-list'>
-        {videoInfo.allFormats.map((format, index) => {
+        {videoInfo.allFormats.filter(format => (format.audioCodec !== null)).map((format, index) => {
           const isAudioOnly = format.qualityLabel === null
           const hasNoAudio = format.audioCodec === null;
           const suffix = `${hasNoAudio ? "(no audio)" : ""} ${isAudioOnly ? "(audio only)" : ""}`;
