@@ -93,3 +93,7 @@ nav {
 .search-section {
   padding-top: 1rem;
 }
+
+.sentence:hover {
+  background: var(--contrast-focus);
+}
